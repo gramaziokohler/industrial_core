@@ -29,6 +29,9 @@ set(SRC_FILES src/byte_array.cpp
 
 	src/message_handler.cpp
 	src/message_manager.cpp
+	src/cartesian_traj_pt.cpp
+	src/orientation.cpp
+	src/position.cpp
 	src/ping_handler.cpp
 	src/ping_message.cpp
 	src/joint_data.cpp
@@ -38,6 +41,7 @@ set(SRC_FILES src/byte_array.cpp
 	src/joint_traj.cpp
 	src/robot_status.cpp
 
+	src/messages/cartesian_traj_pt_message.cpp
 	src/messages/joint_message.cpp
 	src/messages/joint_feedback_message.cpp
 	src/messages/joint_traj_pt_message.cpp
