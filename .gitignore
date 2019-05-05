@@ -25,3 +25,6 @@ CATKIN_IGNORE*
 .pydevproject
 .project
 .cproject
+
+# VS Code stuff
+.vscode
