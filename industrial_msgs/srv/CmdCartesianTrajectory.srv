@@ -1,0 +1,8 @@
+# Send a CartesianTrajectory command to the robot.
+#   - provides a response-code to verify command was received
+#   - returns when trajectory is sent to robot, not when motion completed
+#   - return code may NOT indicate successful transfer to robot
+
+industrial_msgs/CartesianTrajectory trajectory
+---
+industrial_msgs/ServiceReturnCode code
