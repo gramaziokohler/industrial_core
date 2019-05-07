@@ -18,6 +18,8 @@ set(SRC_FILES src/joint_relay_handler.cpp
               src/joint_trajectory_streamer.cpp
               src/joint_trajectory_interface.cpp
               src/robot_state_interface.cpp
+              src/trajectory_interface.cpp
+              src/trajectory_streamer.cpp
               src/utils.cpp)
 
 # NOTE: The libraries generated this package are not included in the catkin_package
@@ -85,6 +87,13 @@ target_link_libraries(robot_state
   simple_message
   ${catkin_LIBRARIES})
 
+add_executable(full_motion_streaming_interface
+  src/generic_trajectory_streamer_node.cpp)
+target_link_libraries(full_motion_streaming_interface 
+  industrial_robot_client 
+  simple_message
+  ${catkin_LIBRARIES})
+
 add_executable(motion_streaming_interface
   src/generic_joint_streamer_node.cpp)
 target_link_libraries(motion_streaming_interface 
@@ -107,6 +116,13 @@ add_executable(robot_state_bswap
   src/generic_robot_state_node.cpp)
 target_link_libraries(robot_state_bswap 
   industrial_robot_client_bswap 
+  simple_message_bswap
+  ${catkin_LIBRARIES})
+
+add_executable(full_motion_streaming_interface_bswap
+  src/generic_trajectory_streamer_node.cpp)
+target_link_libraries(full_motion_streaming_interface_bswap 
+  industrial_robot_client_bswap  
   simple_message_bswap
   ${catkin_LIBRARIES})
 
@@ -172,6 +188,8 @@ install(TARGETS
         motion_download_interface 
         motion_streaming_interface_bswap 
         motion_download_interface_bswap 
+        full_motion_streaming_interface 
+        full_motion_streaming_interface_bswap 
         joint_trajectory_action 
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
