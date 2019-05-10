@@ -109,7 +109,7 @@ public:
    *
    * \return true on success, false otherwise
    */
-    virtual bool trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr &traj, std::vector<JointTrajPtMessage> *msgs);
+    virtual bool trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs);
 
     /**
    * \brief Convert ROS cartesian trajectory message into stream of CartesianTrajPtMessages for sending to robot.
@@ -119,7 +119,7 @@ public:
    *
    * \return true on success, false otherwise
    */
-    virtual bool trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector<CartesianTrajPtMessage> *msgs);
+    virtual bool trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs);
 
     /**
    * \brief Transform joint positions before publishing.
@@ -230,21 +230,11 @@ public:
    * \brief Send trajectory to robot, using this node's robot-connection.
    *   Specific method must be implemented in a derived class (e.g. streaming, download, etc.)
    *
-   * \param messages List of SimpleMessage JointTrajPtMessages to send to robot.
+   * \param messages List of SimpleMessage trajectory points to send to robot.
    *
    * \return true on success, false otherwise
    */
-  virtual bool send_to_robot(const std::vector<JointTrajPtMessage> &messages) = 0;
-
-  /**
-   * \brief Send cartesian trajectory to robot, using this node's robot-connection.
-   *   Specific method must be implemented in a derived class (e.g. streaming, download, etc.)
-   *
-   * \param messages List of SimpleMessage CartesianTrajPtMessages to send to robot.
-   *
-   * \return true on success, false otherwise
-   */
-  virtual bool send_to_robot(const std::vector<CartesianTrajPtMessage> &messages) = 0;
+  virtual bool send_to_robot(const std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > &messages) = 0;
 
   /**
    * \brief Callback function registered to ROS topic-subscribe.
@@ -271,7 +261,7 @@ public:
    * \return true always.  Look at res.code.val to see if call actually succeeded.
    */
   virtual bool stopMotionCB(industrial_msgs::StopMotion::Request &req,
-                                    industrial_msgs::StopMotion::Response &res);
+                            industrial_msgs::StopMotion::Response &res);
 
   /**
    * \brief Validate that trajectory command meets minimum requirements
@@ -319,7 +309,7 @@ public:
 private:
   static JointTrajPtMessage create_message(int seq, std::vector<double> joint_pos, double velocity, double duration);
   static CartesianTrajPtMessage create_message(int seq, double x, double y, double z, double rx, double ry, double rz, double rw,
-                                               double linear_velocity, double angular_velocity, double blending_radius, double duration);
+                                               double linear_velocity, double angular_velocity, double acceleration, double blending_radius, double duration);
 
   /**
    * \brief Callback function registered to ROS CmdJointTrajectory service

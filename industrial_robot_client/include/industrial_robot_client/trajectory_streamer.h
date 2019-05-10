@@ -74,13 +74,12 @@ public:
   virtual void jointTrajectoryCB(const trajectory_msgs::JointTrajectoryConstPtr &msg);
   virtual void cartesianTrajectoryCB(const industrial_msgs::CartesianTrajectoryConstPtr &msg);
 
-  virtual bool trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr &traj, std::vector<JointTrajPtMessage> *msgs);
-  virtual bool trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector<CartesianTrajPtMessage> *msgs);
+  virtual bool trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs);
+  virtual bool trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs);
 
   void streamingThread();
 
-  bool send_to_robot(const std::vector<CartesianTrajPtMessage> &messages);
-  bool send_to_robot(const std::vector<JointTrajPtMessage> &messages);
+  bool send_to_robot(const std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > &messages);
 
 protected:
 

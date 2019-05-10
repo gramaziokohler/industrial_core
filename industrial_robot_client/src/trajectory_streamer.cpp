@@ -74,7 +74,7 @@ void TrajectoryStreamer::jointTrajectoryCB(const trajectory_msgs::JointTrajector
   }
 
   // calc new trajectory
-  std::vector<JointTrajPtMessage> new_traj_msgs;
+  std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > new_traj_msgs;
   if (!trajectory_to_msgs(msg, &new_traj_msgs))
     return;
 
@@ -110,7 +110,7 @@ void TrajectoryStreamer::cartesianTrajectoryCB(const industrial_msgs::CartesianT
   }
 
   // calc new trajectory
-  std::vector<CartesianTrajPtMessage> new_traj_msgs;
+  std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > new_traj_msgs;
   if (!trajectory_to_msgs(msg, &new_traj_msgs))
     return;
 
@@ -118,7 +118,7 @@ void TrajectoryStreamer::cartesianTrajectoryCB(const industrial_msgs::CartesianT
   send_to_robot(new_traj_msgs);
 }
 
-bool TrajectoryStreamer::send_to_robot(const std::vector<JointTrajPtMessage> &messages)
+bool TrajectoryStreamer::send_to_robot(const std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > &messages)
 {
   ROS_INFO("Loading trajectory, setting state to streaming");
   this->mutex_.lock();
@@ -129,7 +129,6 @@ bool TrajectoryStreamer::send_to_robot(const std::vector<JointTrajPtMessage> &me
     {
       this->current_traj_.push_back(messages[i]);
     }
-    // this->current_traj_ = messages;
     this->current_point_ = 0;
     this->state_ = TransferStates::STREAMING;
     this->streaming_start_ = ros::Time::now();
@@ -139,28 +138,7 @@ bool TrajectoryStreamer::send_to_robot(const std::vector<JointTrajPtMessage> &me
   return true;
 }
 
-bool TrajectoryStreamer::send_to_robot(const std::vector<CartesianTrajPtMessage> &messages)
-{
-  ROS_INFO("Loading trajectory, setting state to streaming");
-  this->mutex_.lock();
-  {
-    ROS_INFO("Executing trajectory of size: %d", (int)messages.size());
-    this->current_traj_.clear();
-    for (size_t i = 0; i < messages.size(); ++i)
-    {
-      this->current_traj_.push_back(messages[i]);
-    }
-    // this->current_traj_ = messages;
-    this->current_point_ = 0;
-    this->state_ = TransferStates::STREAMING;
-    this->streaming_start_ = ros::Time::now();
-  }
-  this->mutex_.unlock();
-
-  return true;
-}
-
-bool TrajectoryStreamer::trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr &traj, std::vector<JointTrajPtMessage> *msgs)
+bool TrajectoryStreamer::trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs)
 {
   // use base function to transform points
   if (!TrajectoryInterface::trajectory_to_msgs(traj, msgs))
@@ -177,7 +155,7 @@ bool TrajectoryStreamer::trajectory_to_msgs(const trajectory_msgs::JointTrajecto
   return true;
 }
 
-bool TrajectoryStreamer::trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector<CartesianTrajPtMessage> *msgs)
+bool TrajectoryStreamer::trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs)
 {
   // use base function to transform points
   if (!TrajectoryInterface::trajectory_to_msgs(traj, msgs))

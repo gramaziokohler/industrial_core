@@ -79,13 +79,15 @@ bool TrajectoryInterface::init(SmplMsgConnection *connection, const std::vector<
   this->connection_ = connection;
   this->all_joint_names_ = joint_names;
   this->joint_vel_limits_ = velocity_limits;
-  this->linear_velocity_limit_ = linear_velocity_limit_;
+  this->linear_velocity_limit_ = linear_velocity_limit;
   this->angular_velocity_limit_ = angular_velocity_limit;
   connection_->makeConnect();
 
   // try to read velocity limits from URDF, if none specified
   if (joint_vel_limits_.empty() && !industrial_utils::param::getJointVelocityLimits("robot_description", joint_vel_limits_))
     ROS_WARN("Unable to read velocity limits from 'robot_description' param.  Velocity validation disabled.");
+
+  // TODO: Maybe try to calculate linear/angular velocity based on URDF joint limits
 
   this->srv_stop_motion_ = this->node_.advertiseService("stop_motion", &TrajectoryInterface::stopMotionCB, this);
   this->srv_joint_trajectory_ = this->node_.advertiseService("joint_path_command", &TrajectoryInterface::jointTrajectoryCB, this);
@@ -143,7 +145,7 @@ void TrajectoryInterface::jointTrajectoryCB(const trajectory_msgs::JointTrajecto
   }
 
   // convert trajectory into robot-format
-  std::vector<JointTrajPtMessage> robot_msgs;
+  std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > robot_msgs;
   if (!trajectory_to_msgs(msg, &robot_msgs))
     return;
 
@@ -164,7 +166,7 @@ void TrajectoryInterface::cartesianTrajectoryCB(const industrial_msgs::Cartesian
   }
 
   // convert trajectory into robot-format
-  std::vector<CartesianTrajPtMessage> robot_msgs;
+  std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > robot_msgs;
   if (!trajectory_to_msgs(msg, &robot_msgs))
     return;
 
@@ -172,7 +174,7 @@ void TrajectoryInterface::cartesianTrajectoryCB(const industrial_msgs::Cartesian
   send_to_robot(robot_msgs);
 }
 
-bool TrajectoryInterface::trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr& traj, std::vector<JointTrajPtMessage>* msgs)
+bool TrajectoryInterface::trajectory_to_msgs(const trajectory_msgs::JointTrajectoryConstPtr& traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs)
 {
   msgs->clear();
 
@@ -204,7 +206,7 @@ bool TrajectoryInterface::trajectory_to_msgs(const trajectory_msgs::JointTraject
   return true;
 }
 
-bool TrajectoryInterface::trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector<CartesianTrajPtMessage> *msgs)
+bool TrajectoryInterface::trajectory_to_msgs(const industrial_msgs::CartesianTrajectoryConstPtr &traj, std::vector< boost::variant<CartesianTrajPtMessage, JointTrajPtMessage> > *msgs)
 {
   msgs->clear();
 
@@ -227,8 +229,7 @@ bool TrajectoryInterface::trajectory_to_msgs(const industrial_msgs::CartesianTra
 
     CartesianTrajPtMessage msg = create_message(i, xform_pt.pose.position.x, xform_pt.pose.position.y, xform_pt.pose.position.z,
                                                 xform_pt.pose.orientation.x, xform_pt.pose.orientation.y, xform_pt.pose.orientation.z, xform_pt.pose.orientation.w,
-                                                linear_vel, angular_vel,
-                                                xform_pt.blending_radius,
+                                                linear_vel, angular_vel, xform_pt.acceleration, xform_pt.blending_radius,
                                                 duration);
     msgs->push_back(msg);
   }
@@ -400,7 +401,7 @@ JointTrajPtMessage TrajectoryInterface::create_message(int seq, std::vector<doub
 }
 
 CartesianTrajPtMessage TrajectoryInterface::create_message(int seq, double x, double y, double z, double rx, double ry, double rz, double rw,
-                                                           double linear_velocity, double angular_velocity, double blending_radius, double duration)
+                                                           double linear_velocity, double angular_velocity, double acceleration, double blending_radius, double duration)
 {
   industrial::position::Position position;
   industrial::orientation::Orientation orientation;
@@ -409,7 +410,7 @@ CartesianTrajPtMessage TrajectoryInterface::create_message(int seq, double x, do
   orientation.init(rx, ry, rz, rw);
 
   rbt_CartesianTrajPt pt;
-  pt.init(seq, position, orientation, linear_velocity, angular_velocity, blending_radius, duration);
+  pt.init(seq, position, orientation, linear_velocity, angular_velocity, acceleration, blending_radius, duration);
 
   CartesianTrajPtMessage msg;
   msg.init(pt);

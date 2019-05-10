@@ -58,6 +58,7 @@ typedef SpecialSeqValues::SpecialSeqValue SpecialSeqValue;
  *   orientation         (industrial::orientation)                 16 bytes
  *   linear_velocity     (industrial::shared_types::shared_real)   4  bytes
  *   angular_velocity    (industrial::shared_types::shared_real)   4  bytes
+ *   acceleration        (industrial::shared_types::shared_real)   4  bytes
  *   blending_radius     (industrial::shared_types::shared_real)   4  bytes
  *   duration            (industrial::shared_types::shared_real)   4  bytes
  *
@@ -97,6 +98,7 @@ public:
             industrial::orientation::Orientation & orientation,
             industrial::shared_types::shared_real linear_velocity,
             industrial::shared_types::shared_real angular_velocity,
+            industrial::shared_types::shared_real acceleration,
             industrial::shared_types::shared_real blending_radius,
             industrial::shared_types::shared_real duration);
 
@@ -201,6 +203,26 @@ public:
   }
 
   /**
+   * \brief Sets cartesian trajectory point acceleration
+   *
+   * \param acceleration
+   */
+  void setAcceleration(industrial::shared_types::shared_real acceleration)
+  {
+    this->acceleration_ = acceleration;
+  }
+
+  /**
+   * \brief Returns cartesian trajectory point acceleration
+   *
+   * \return cartesian trajectory point acceleration
+   */
+  industrial::shared_types::shared_real getAcceleration()
+  {
+    return this->acceleration_;
+  }
+
+  /**
    * \brief Sets cartesian trajectory point blending radius
    *
    * \param blending radius
@@ -262,7 +284,7 @@ public:
     return sizeof(industrial::shared_types::shared_int) +
            this->position_.byteLength() +
            this->orientation_.byteLength() +
-           4 * sizeof(industrial::shared_types::shared_real);
+           5 * sizeof(industrial::shared_types::shared_real);
   }
 
 private:
@@ -291,6 +313,11 @@ private:
    * \brief angular velocity of the cartesian point
    */
   industrial::shared_types::shared_real angular_velocity_;
+
+  /**
+   * \brief acceleration of the cartesian point
+   */
+  industrial::shared_types::shared_real acceleration_;
 
   /**
    * \brief blending radius of the cartesian point
