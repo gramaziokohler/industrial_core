@@ -41,8 +41,6 @@ typedef SpecialSeqValues::SpecialSeqValue SpecialSeqValue;
  *
  * This point differs from the ROS trajectory point in the following ways:
  *
- *  - The linear and angular velocities in an industrial robot standard way
- *    (as a single value).
  *  - The duration is somewhat different than the ROS timestamp.  The timestamp
  *    specifies when the move should start, where as the duration is how long the
  *    move should take.  A big assumption is that a sequence of points is continuously
@@ -56,8 +54,7 @@ typedef SpecialSeqValues::SpecialSeqValue SpecialSeqValue;
  *   sequence            (industrial::shared_types::shared_int)    4  bytes
  *   position            (industrial::position)                    12 bytes
  *   orientation         (industrial::orientation)                 16 bytes
- *   linear_velocity     (industrial::shared_types::shared_real)   4  bytes
- *   angular_velocity    (industrial::shared_types::shared_real)   4  bytes
+ *   velocity            (industrial::shared_types::shared_real)   4  bytes
  *   acceleration        (industrial::shared_types::shared_real)   4  bytes
  *   blending_radius     (industrial::shared_types::shared_real)   4  bytes
  *   duration            (industrial::shared_types::shared_real)   4  bytes
@@ -96,8 +93,7 @@ public:
   void init(industrial::shared_types::shared_int sequence,
             industrial::position::Position & position,
             industrial::orientation::Orientation & orientation,
-            industrial::shared_types::shared_real linear_velocity,
-            industrial::shared_types::shared_real angular_velocity,
+            industrial::shared_types::shared_real velocity,
             industrial::shared_types::shared_real acceleration,
             industrial::shared_types::shared_real blending_radius,
             industrial::shared_types::shared_real duration);
@@ -163,43 +159,23 @@ public:
   }
 
   /**
-   * \brief Sets cartesian trajectory point linear velocity
+   * \brief Sets cartesian trajectory point velocity
    *
-   * \param linear velocity
+   * \param velocity
    */
-  void setLinearVelocity(industrial::shared_types::shared_real linear_velocity)
+  void setVelocity(industrial::shared_types::shared_real velocity)
   {
-    this->linear_velocity_ = linear_velocity;
+    this->velocity_ = velocity;
   }
 
   /**
-   * \brief Returns cartesian trajectory point linear velocity
+   * \brief Returns cartesian trajectory point velocity
    *
-   * \return cartesian trajectory point linear velocity
+   * \return cartesian trajectory point velocity
    */
-  industrial::shared_types::shared_real getLinearVelocity()
+  industrial::shared_types::shared_real getVelocity()
   {
-    return this->linear_velocity_;
-  }
-
-  /**
-   * \brief Sets cartesian trajectory point angular velocity
-   *
-   * \param angular velocity
-   */
-  void setAngularVelocity(industrial::shared_types::shared_real angular_velocity)
-  {
-    this->angular_velocity_ = angular_velocity;
-  }
-
-  /**
-   * \brief Returns cartesian trajectory point angular velocity
-   *
-   * \return cartesian trajectory point angular velocity
-   */
-  industrial::shared_types::shared_real getAngularVelocity()
-  {
-    return this->angular_velocity_;
+    return this->velocity_;
   }
 
   /**
@@ -284,7 +260,7 @@ public:
     return sizeof(industrial::shared_types::shared_int) +
            this->position_.byteLength() +
            this->orientation_.byteLength() +
-           5 * sizeof(industrial::shared_types::shared_real);
+           4 * sizeof(industrial::shared_types::shared_real);
   }
 
 private:
@@ -305,14 +281,9 @@ private:
   industrial::orientation::Orientation orientation_;
 
   /**
-   * \brief linear velocity of the cartesian point
+   * \brief velocity of the cartesian point
    */
-  industrial::shared_types::shared_real linear_velocity_;
-
-  /**
-   * \brief angular velocity of the cartesian point
-   */
-  industrial::shared_types::shared_real angular_velocity_;
+  industrial::shared_types::shared_real velocity_;
 
   /**
    * \brief acceleration of the cartesian point

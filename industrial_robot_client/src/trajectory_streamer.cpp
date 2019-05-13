@@ -22,13 +22,13 @@ public:
 };
 
 bool TrajectoryStreamer::init(SmplMsgConnection *connection, const std::vector<std::string> &joint_names,
-                              const std::map<std::string, double> &velocity_limits, double linear_velocity_limit, double angular_velocity_limit)
+                              const std::map<std::string, double> &velocity_limits)
 {
   bool rtn = true;
 
   ROS_INFO("TrajectoryStreamer: init");
 
-  rtn &= TrajectoryInterface::init(connection, joint_names, velocity_limits, linear_velocity_limit, angular_velocity_limit);
+  rtn &= TrajectoryInterface::init(connection, joint_names, velocity_limits);
 
   this->mutex_.lock();
   this->current_point_ = 0;

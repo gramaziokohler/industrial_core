@@ -37,8 +37,7 @@ void CartesianTrajPt::init()
   this->position_.init();
   this->orientation_.init();
   this->sequence_ = 0;
-  this->linear_velocity_ = 0.0;
-  this->angular_velocity_ = 0.0;
+  this->velocity_ = 0.0;
   this->acceleration_ = 0.0;
   this->blending_radius_ = 0.0;
   this->duration_ = 0.0;
@@ -47,8 +46,7 @@ void CartesianTrajPt::init()
 void CartesianTrajPt::init(shared_int sequence,
                            Position &position,
                            Orientation &orientation,
-                           shared_real linear_velocity,
-                           shared_real angular_velocity,
+                           shared_real velocity,
                            shared_real acceleration,
                            shared_real blending_radius,
                            shared_real duration)
@@ -56,8 +54,7 @@ void CartesianTrajPt::init(shared_int sequence,
   this->setSequence(sequence);
   this->setPosition(position);
   this->setOrientation(orientation);
-  this->setLinearVelocity(linear_velocity);
-  this->setAngularVelocity(angular_velocity);
+  this->setVelocity(velocity);
   this->setAcceleration(acceleration);
   this->setBlendingRadius(blending_radius);
   this->setDuration(duration);
@@ -68,8 +65,7 @@ void CartesianTrajPt::copyFrom(CartesianTrajPt &src)
   this->setSequence(src.getSequence());
   src.getPosition(this->position_);
   src.getOrientation(this->orientation_);
-  this->setLinearVelocity(src.getLinearVelocity());
-  this->setAngularVelocity(src.getAngularVelocity());
+  this->setVelocity(src.getVelocity());
   this->setAcceleration(src.getAcceleration());
   this->setBlendingRadius(src.getBlendingRadius());
   this->setDuration(src.getDuration());
@@ -80,8 +76,7 @@ bool CartesianTrajPt::operator==(CartesianTrajPt &other)
   return this->sequence_ == other.sequence_ &&
          this->position_ == other.position_ &&
          this->orientation_ == other.orientation_ &&
-         this->linear_velocity_ == other.linear_velocity_ &&
-         this->angular_velocity_ == other.angular_velocity_ &&
+         this->velocity_ == other.velocity_ &&
          this->acceleration_ == other.acceleration_ &&
          this->blending_radius_ == other.blending_radius_ &&
          this->duration_ == other.duration_;
@@ -109,15 +104,9 @@ bool CartesianTrajPt::load(industrial::byte_array::ByteArray *buffer)
     return false;
   }
 
-  if (!buffer->load(this->linear_velocity_))
+  if (!buffer->load(this->velocity_))
   {
-    LOG_ERROR("Failed to load cartesian traj. pt. linear velocity data");
-    return false;
-  }
-
-  if (!buffer->load(this->angular_velocity_))
-  {
-    LOG_ERROR("Failed to load cartesian traj. pt. angular velocity data");
+    LOG_ERROR("Failed to load cartesian traj. pt. velocity data");
     return false;
   }
 
@@ -164,15 +153,9 @@ bool CartesianTrajPt::unload(industrial::byte_array::ByteArray *buffer)
     return false;
   }
 
-  if (!buffer->unload(this->angular_velocity_))
+  if (!buffer->unload(this->velocity_))
   {
-    LOG_ERROR("Failed to unload cartesian traj. pt. angular velocity data");
-    return false;
-  }
-
-  if (!buffer->unload(this->linear_velocity_))
-  {
-    LOG_ERROR("Failed to unload cartesian traj. pt. linear velocity data");
+    LOG_ERROR("Failed to unload cartesian traj. pt. velocity data");
     return false;
   }
 

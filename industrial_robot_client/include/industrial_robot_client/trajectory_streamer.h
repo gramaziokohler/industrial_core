@@ -61,13 +61,10 @@ public:
    *   - Joints in the incoming JointTrajectory stream that are NOT listed here will be ignored.
    * \param velocity_limits map of maximum velocities for each joint
    *   - leave empty to lookup from URDF
-   * \param linear_velocity_limit maximum linear velocity, used to compute tool linear speed during cartesian move
-   * \param angular_velocity_limit maximum angular velocity, used to compute tool rotational speed during cartesian move
    * \return true on success, false otherwise (an invalid message type)
    */
   virtual bool init(SmplMsgConnection* connection, const std::vector<std::string> &joint_names,
-                    const std::map<std::string, double> &velocity_limits = std::map<std::string, double>(),
-                    double linear_velocity_limit = 0.0, double angular_velocity_limit = 0.0);
+                    const std::map<std::string, double> &velocity_limits = std::map<std::string, double>());
 
   ~TrajectoryStreamer();
 

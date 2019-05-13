@@ -79,13 +79,10 @@ public:
    *   - Joints in the incoming JointTrajectory stream that are NOT listed here will be ignored.
    * \param velocity_limits map of maximum velocities for each joint
    *   - leave empty to lookup from URDF
-   * \param linear_velocity_limit maximum linear velocity, used to compute tool linear speed during cartesian move
-   * \param angular_velocity_limit maximum angular velocity, used to compute tool rotational speed during cartesian move
    * \return true on success, false otherwise (an invalid message type)
    */
     virtual bool init(SmplMsgConnection *connection, const std::vector<std::string> &joint_names,
-                      const std::map<std::string, double> &velocity_limits = std::map<std::string, double>(),
-                      double linear_velocity_limit = 0.0, double angular_velocity_limit = 0.0);
+                      const std::map<std::string, double> &velocity_limits = std::map<std::string, double>());
 
     virtual ~TrajectoryInterface();
 
@@ -178,19 +175,17 @@ public:
   virtual bool calc_speed(const trajectory_msgs::JointTrajectoryPoint& pt, double* rbt_velocity, double* rbt_duration);
 
   /**
-   * \brief Reduce the ROS velocity commands (Twist) to two scalars, one of linear velocity and 
-   *   another one for rotational velocity, for communication to the robot.
+   * \brief Compute velocity for communication to the robot.
    *   For flexibility, the robot command message contains both "velocity" and "duration" fields.  The specific robot
    *   implementation can utilize either or both of these fields, as appropriate.
    *
    * \param[in] pt trajectory point data, in order/count expected by robot connection
-   * \param[out] rbt_linear_velocity computed linear velocity scalar for robot message (if needed by robot)
-   * \param[out] rbt_angular_velocity computed angular velocity scalar for robot message (if needed by robot)
+   * \param[out] rbt_velocity computed velocity scalar for robot message (if needed by robot)
    * \param[out] rbt_duration computed move duration for robot message (if needed by robot)
    *
    * \return true on success, false otherwise
    */
-  virtual bool calc_speed(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_linear_velocity, double *rbt_angular_velocity, double *rbt_duration);
+  virtual bool calc_speed(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_velocity, double *rbt_duration);
 
   /**
    * \brief Reduce the ROS velocity commands (per-joint velocities) to a single scalar for communication to the robot.
@@ -204,16 +199,14 @@ public:
   virtual bool calc_velocity(const trajectory_msgs::JointTrajectoryPoint &pt, double *rbt_velocity);
 
   /**
-   * \brief Reduce the ROS velocity commands (Twist) to two scalars, one of linear velocity and 
-   *   another one for rotational velocity, for communication to the robot.
+   * \brief Compute velocity for communication to the robot.
    *
    * \param[in] pt trajectory point data, in order/count expected by robot connection
-   * \param[out] rbt_linear_velocity computed linear velocity scalar for robot message (if needed by robot)
-   * \param[out] rbt_angular_velocity computed angular velocity scalar for robot message (if needed by robot)
+   * \param[out] rbt_velocity computed velocity scalar for robot message (if needed by robot)
    *
    * \return true on success, false otherwise
    */
-  virtual bool calc_velocity(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_linear_velocity, double *rbt_angular_velocity);
+  virtual bool calc_velocity(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_velocity);
 
   /**
    * \brief Compute the expected move duration for communication to the robot.
@@ -300,8 +293,6 @@ public:
   double default_joint_pos_;                    // default position to use for "dummy joints", if none specified
   double default_vel_ratio_;                    // default velocity ratio to use for joint commands, if no velocity or max_vel specified
   double default_duration_;                     // default duration to use for joint commands, if no
-  double linear_velocity_limit_;                // max linear velocity
-  double angular_velocity_limit_;               // max angular velocity
   std::map<std::string, double> joint_vel_limits_; // cache of max joint velocities from URDF
   sensor_msgs::JointState cur_joint_pos_;  // cache of last received joint state
 
@@ -309,7 +300,7 @@ public:
 private:
   static JointTrajPtMessage create_message(int seq, std::vector<double> joint_pos, double velocity, double duration);
   static CartesianTrajPtMessage create_message(int seq, double x, double y, double z, double rx, double ry, double rz, double rw,
-                                               double linear_velocity, double angular_velocity, double acceleration, double blending_radius, double duration);
+                                               double velocity, double acceleration, double blending_radius, double duration);
 
   /**
    * \brief Callback function registered to ROS CmdJointTrajectory service

@@ -74,20 +74,16 @@ bool TrajectoryInterface::init(SmplMsgConnection* connection)
 }
 
 bool TrajectoryInterface::init(SmplMsgConnection *connection, const std::vector<std::string> &joint_names,
-                               const std::map<std::string, double> &velocity_limits, double linear_velocity_limit, double angular_velocity_limit)
+                               const std::map<std::string, double> &velocity_limits)
 {
   this->connection_ = connection;
   this->all_joint_names_ = joint_names;
   this->joint_vel_limits_ = velocity_limits;
-  this->linear_velocity_limit_ = linear_velocity_limit;
-  this->angular_velocity_limit_ = angular_velocity_limit;
   connection_->makeConnect();
 
   // try to read velocity limits from URDF, if none specified
   if (joint_vel_limits_.empty() && !industrial_utils::param::getJointVelocityLimits("robot_description", joint_vel_limits_))
     ROS_WARN("Unable to read velocity limits from 'robot_description' param.  Velocity validation disabled.");
-
-  // TODO: Maybe try to calculate linear/angular velocity based on URDF joint limits
 
   this->srv_stop_motion_ = this->node_.advertiseService("stop_motion", &TrajectoryInterface::stopMotionCB, this);
   this->srv_joint_trajectory_ = this->node_.advertiseService("joint_path_command", &TrajectoryInterface::jointTrajectoryCB, this);
@@ -217,19 +213,19 @@ bool TrajectoryInterface::trajectory_to_msgs(const industrial_msgs::CartesianTra
   for (size_t i = 0; i < traj->points.size(); ++i)
   {
     ros_CartesianTrajPt rbt_pt, xform_pt;
-    double linear_vel, angular_vel, duration;
+    double vel, duration;
 
     // transform point data
     if (!transform(rbt_pt, &xform_pt))
       return false;
 
-    // reduce velocity to a scalars, for robot command
-    if (!calc_speed(xform_pt, &linear_vel, &angular_vel, &duration))
+    // calculate velocity for robot command
+    if (!calc_speed(xform_pt, &vel, &duration))
       return false;
 
     CartesianTrajPtMessage msg = create_message(i, xform_pt.pose.position.x, xform_pt.pose.position.y, xform_pt.pose.position.z,
                                                 xform_pt.pose.orientation.x, xform_pt.pose.orientation.y, xform_pt.pose.orientation.z, xform_pt.pose.orientation.w,
-                                                linear_vel, angular_vel, xform_pt.acceleration, xform_pt.blending_radius,
+                                                vel, xform_pt.acceleration, xform_pt.blending_radius,
                                                 duration);
     msgs->push_back(msg);
   }
@@ -277,9 +273,9 @@ bool TrajectoryInterface::select(const std::vector<std::string>& ros_joint_names
   return true;
 }
 
-bool TrajectoryInterface::calc_speed(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_linear_velocity, double *rbt_angular_velocity, double *rbt_duration)
+bool TrajectoryInterface::calc_speed(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_velocity, double *rbt_duration)
 {
-  return calc_velocity(pt, rbt_linear_velocity, rbt_angular_velocity) && calc_duration(pt, rbt_duration);
+  return calc_velocity(pt, rbt_velocity) && calc_duration(pt, rbt_duration);
 }
 
 bool TrajectoryInterface::calc_speed(const trajectory_msgs::JointTrajectoryPoint &pt, double *rbt_velocity, double *rbt_duration)
@@ -287,29 +283,23 @@ bool TrajectoryInterface::calc_speed(const trajectory_msgs::JointTrajectoryPoint
 	return calc_velocity(pt, rbt_velocity) && calc_duration(pt, rbt_duration);
 }
 
-// linear and angular velocity are calculated based on the ratio between the magnitude of the vector expressing it in 3D versus its limit.
-bool TrajectoryInterface::calc_velocity(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_linear_velocity, double *rbt_angular_velocity)
+// velocity is a ration (0.0-1.0)
+bool TrajectoryInterface::calc_velocity(const industrial_msgs::CartesianTrajectoryPoint &pt, double *rbt_velocity)
 {
-  *rbt_linear_velocity = default_vel_ratio_;
-  *rbt_angular_velocity = default_vel_ratio_;
 
-  // warn if no limit defined
-  if (linear_velocity_limit_ == 0)
+  if (pt.velocity == 0)
   {
-    ROS_WARN("Linear velocity limit unspecified.  Using default.");
-  }
-  else
-  {
-    *rbt_linear_velocity = std::sqrt(std::pow(pt.velocity.linear.x, 2) + std::pow(pt.velocity.linear.y, 2) + std::pow(pt.velocity.linear.z, 2)) / linear_velocity_limit_;
+    *rbt_velocity = default_vel_ratio_;
+    ROS_WARN("Velocity unspecified.  Using default.");
+    return true;
   }
 
-  if (angular_velocity_limit_ == 0)
+  *rbt_velocity = pt.velocity;
+
+  if ((*rbt_velocity < 0) || (*rbt_velocity > 1))
   {
-    ROS_WARN("Angular velocity limit unspecified.  Using default speed.");
-  }
-  else
-  {
-    *rbt_angular_velocity = std::sqrt(std::pow(pt.velocity.angular.x, 2) + std::pow(pt.velocity.angular.y, 2) + std::pow(pt.velocity.angular.z, 2)) / angular_velocity_limit_;
+    ROS_WARN("velocity (%.1f %%) is out-of-range.  Clipping to [0-100%%]", *rbt_velocity * 100);
+    *rbt_velocity = std::min(1.0, std::max(0.0, *rbt_velocity)); // clip to [0,1]
   }
 
   return true;
@@ -401,7 +391,7 @@ JointTrajPtMessage TrajectoryInterface::create_message(int seq, std::vector<doub
 }
 
 CartesianTrajPtMessage TrajectoryInterface::create_message(int seq, double x, double y, double z, double rx, double ry, double rz, double rw,
-                                                           double linear_velocity, double angular_velocity, double acceleration, double blending_radius, double duration)
+                                                           double velocity, double acceleration, double blending_radius, double duration)
 {
   industrial::position::Position position;
   industrial::orientation::Orientation orientation;
@@ -410,7 +400,7 @@ CartesianTrajPtMessage TrajectoryInterface::create_message(int seq, double x, do
   orientation.init(rx, ry, rz, rw);
 
   rbt_CartesianTrajPt pt;
-  pt.init(seq, position, orientation, linear_velocity, angular_velocity, acceleration, blending_radius, duration);
+  pt.init(seq, position, orientation, velocity, acceleration, blending_radius, duration);
 
   CartesianTrajPtMessage msg;
   msg.init(pt);
