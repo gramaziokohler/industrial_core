@@ -215,6 +215,10 @@ bool TrajectoryInterface::trajectory_to_msgs(const industrial_msgs::CartesianTra
     ros_CartesianTrajPt rbt_pt, xform_pt;
     double vel, duration;
 
+    // select data for sending to robot
+    if (!select(traj->points[i], &rbt_pt))
+      return false;
+
     // transform point data
     if (!transform(rbt_pt, &xform_pt))
       return false;
@@ -230,6 +234,12 @@ bool TrajectoryInterface::trajectory_to_msgs(const industrial_msgs::CartesianTra
     msgs->push_back(msg);
   }
 
+  return true;
+}
+
+bool TrajectoryInterface::select(const ros_CartesianTrajPt &ros_pt, ros_CartesianTrajPt *rbt_pt)
+{
+  *rbt_pt = ros_pt;
   return true;
 }
 

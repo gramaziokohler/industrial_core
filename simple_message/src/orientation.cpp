@@ -61,7 +61,6 @@ bool Orientation::load(industrial::byte_array::ByteArray *buffer)
 
   if (buffer->load(this->x_) && buffer->load(this->y_) && buffer->load(this->z_) && buffer->load(this->w_))
   {
-
     LOG_COMM("Orientation successfully loaded");
     rtn = true;
   }

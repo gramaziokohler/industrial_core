@@ -52,6 +52,22 @@ namespace industrial
 namespace smpl_msg_connection
 {
 
+std::string stringToHex(const std::string &input)
+{
+  static const char *const lut = "0123456789ABCDEF";
+  size_t len = input.length();
+
+  std::string output;
+  output.reserve(2 * len);
+  for (size_t i = 0; i < len; ++i)
+  {
+    const unsigned char c = input[i];
+    output.push_back(lut[c >> 4]);
+    output.push_back(lut[c & 15]);
+  }
+
+  return output;
+}
 
 bool SmplMsgConnection::sendMsg(SimpleMessage & message)
 {
@@ -131,11 +147,29 @@ bool SmplMsgConnection::sendAndReceiveMsg(SimpleMessage & send, SimpleMessage & 
   if (rtn)
   {
     if(verbose) {
-      LOG_ERROR("Sent message");
+      ByteArray sentData;
+      send.toByteArray(sentData);
+
+      std::vector<char> sentBuffer;
+      sentData.copyTo(sentBuffer);
+      std::string sentBufferStr(sentBuffer.begin(), sentBuffer.end());
+
+      LOG_ERROR("Sent message, Size=%d, Message=%s", (int)sentData.getBufferSize(), stringToHex(sentBufferStr).c_str());
     }
+
     rtn = this->receiveMsg(recv);
+
     if(verbose) {
-      LOG_ERROR("Got message");
+      ByteArray receivedData;
+      recv.toByteArray(receivedData);
+
+      if ((int)receivedData.getBufferSize() > 4)
+      {
+        std::vector<char> receivedBuffer;
+        receivedData.copyTo(receivedBuffer);
+        std::string receivedBufferStr(receivedBuffer.begin(), receivedBuffer.end());
+        LOG_ERROR("Got message, Size=%d, Message=%s", (int)receivedData.getBufferSize(), stringToHex(receivedBufferStr).c_str());
+      }
     }
   }
   else

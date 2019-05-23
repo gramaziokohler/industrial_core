@@ -149,6 +149,16 @@ public:
   }
 
   /**
+   * \brief Select cartesian data for sending to the robot
+   *
+   * \param[in] ros_pt target pos/vel from ROS command
+   * \param[out] rbt_pt target pos/vel
+   *
+   * \return true on success, false otherwise
+   */
+  virtual bool select(const industrial_msgs::CartesianTrajectoryPoint &ros_pt, industrial_msgs::CartesianTrajectoryPoint *rbt_pt);
+
+  /**
    * \brief Select specific joints for sending to the robot
    *
    * \param[in] ros_joint_names joint names from ROS command

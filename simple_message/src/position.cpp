@@ -58,7 +58,6 @@ bool Position::load(industrial::byte_array::ByteArray *buffer)
 
   if (buffer->load(this->x_) && buffer->load(this->y_) && buffer->load(this->z_))
   {
-
     LOG_COMM("Position successfully loaded");
     rtn = true;
   }
