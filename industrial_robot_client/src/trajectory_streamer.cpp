@@ -228,7 +228,7 @@ void TrajectoryStreamer::streamingThread()
         msg = boost::apply_visitor(RequestVisitor(), streamMsg);
 
         ROS_DEBUG("Sending trajectory point");
-        if (this->connection_->sendAndReceiveMsg(msg, reply, true))
+        if (this->connection_->sendAndReceiveMsg(msg, reply, false))
         {
           this->current_point_++;
           ROS_INFO("Point[%d of %d] sent to controller",
